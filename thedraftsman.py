@@ -10,7 +10,7 @@ import csv
 import re
 
 dates = []
-# Create random list of 100 dates to search in past 10 years
+# Create random list of 10000 dates to search in past 10 years
 for i in range(0, 10000):
     year = random.randrange(2008, 2018)
     month = random.randrange(1, 13)
