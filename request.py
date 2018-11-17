@@ -10,9 +10,9 @@ import csv
 import re
 
 dates = []
-# Create random list of 100 dates to search in past 5 years
-for i in range(0, 100):
-    year = random.randrange(2013, 2018)
+# Create random list of 100 dates to search in past 10 years
+for i in range(0, 5):
+    year = random.randrange(2008, 2018)
     month = random.randrange(1, 13)
     day = random.randrange(1, 30)
     if month < 10:
@@ -89,9 +89,9 @@ for i in words:
         cleanwords.remove(i)
     elif i == "...":
         cleanwords.remove(i)
-    elif i == "’" :
+    elif "’" in i:
         cleanwords.remove(i)
-    elif i ==  "`" :
+    elif "`" in i:
         cleanwords.remove(i)
     elif "/" in i:
         cleanwords.remove(i)
@@ -103,7 +103,9 @@ for i in words:
         cleanwords.remove(i)
     elif i == "``":
         cleanwords.remove(i)
-    elif i == "'":
+    elif "'" in i:
+        cleanwords.remove(i)
+    elif i == "'m":
         cleanwords.remove(i)
 
 count = nltk.FreqDist(cleanwords)
@@ -121,4 +123,12 @@ with open('tweets.csv', 'w') as csvFile:
     writer.writerows(csvData)
 csvFile.close()
 
+with open('count.csv', 'w') as csvFile2:
+    writer = csv.writer(csvFile2)
+    writer.writerow(['word','count'])
+    for row in graph:
+        writer.writerow(row)
+csvFile.close()
+
+print('Run Complete')
 plt.show()
