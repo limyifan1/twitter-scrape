@@ -11,7 +11,7 @@ import re
 
 dates = []
 # Create random list of 100 dates to search in past 10 years
-for i in range(0, 5):
+for i in range(0, 10000):
     year = random.randrange(2008, 2018)
     month = random.randrange(1, 13)
     day = random.randrange(1, 30)
@@ -21,34 +21,42 @@ for i in range(0, 5):
         day = "0" + str(day)
     dates.append(str(year) + "-" + str(month) + "-" + str(day))
 
+# Preparing for loop run
 csvData = [["Date", "Text", "Username", "Id", "Permalink", "Retweets", "Favorites"]]
 words = []
 counter = 0
 
+# Perform tweet retrieval per random date
 for date in dates:
+    # Set the search criteria for tweets
     tweetCriteria = got3.manager.TweetCriteria() \
         .setUntil(date) \
-        .setQuerySearch("margaritaville") \
-        .setMaxTweets(10) \
+        .setQuerySearch("the graduate hotel") \
+        .setMaxTweets(1) \
         .setTopTweets(True)
 
+    # Start retrieving tweets
     start = time.time()
     tweet = got3.manager.TweetManager.getTweets(tweetCriteria)
     end = time.time()
     counter += 1
     print(str(counter), end - start)
 
+    # Preparing for filtering of stopwords and duplicates
     swords = stopwords.words('english')
-
     tweetset = set()
 
+    # Reassigning pointer to set of no duplicates
+
     for i in tweet:
-        # print(i.__dict__)
         tweetInfo = []
-        tweetset.add(i.text)
+        tweetset.add(i.text) # Remove duplicate files
+
+        # Prepare to add to csv array
         tweetInfo.append(i.date)
         tweetInfo.append(i.text)
 
+        # Retrieve username using regular expressions
         username = re.search('https://twitter\.com/(.*)/status', i.permalink)
         username = username.group(1)
         tweetInfo.append(username)
@@ -58,24 +66,26 @@ for date in dates:
         tweetInfo.append(i.retweets)
         tweetInfo.append(i.favorites)
 
-        csvData.append(tweetInfo)
+        # Add tweet details to csv array
+        if tweetInfo not in csvData:
+            csvData.append(tweetInfo)
 
-    tweet = tweetset
-
-    for i in tweet:
+    # Tokenize tweets and mentions
+    for i in tweetset:
         token = nltk.word_tokenize(i, language='english')
-        if '@' not in token:
-            for j in token:
-                words.append(j.lower())
+        for j in token:
+            words.append(j.lower())
 
+# Create copy of current words
 cleanwords = words[:]
 
+# Remove punctuation, stopwords and unnecessary terms
 for i in words:
     if i in swords:
         cleanwords.remove(i)
     elif i in string.punctuation:
         cleanwords.remove(i)
-    elif 'margaritaville' in i:
+    elif 'graduate' in i:
         cleanwords.remove(i)
     elif 'www' in i:
         cleanwords.remove(i)
@@ -97,7 +107,9 @@ for i in words:
         cleanwords.remove(i)
     elif i == "'s":
         cleanwords.remove(i)
-    elif i == "—":
+    elif "—" in i:
+        cleanwords.remove(i)
+    elif "-" in i:
         cleanwords.remove(i)
     elif i == "''":
         cleanwords.remove(i)
@@ -107,28 +119,35 @@ for i in words:
         cleanwords.remove(i)
     elif i == "'m":
         cleanwords.remove(i)
+    elif '“' in i:
+        cleanwords.remove(i)
+    elif '”' in i:
+        cleanwords.remove(i)
 
+# Create dict of frequencies
 count = nltk.FreqDist(cleanwords)
 
-# for key, val in count.items():
-#     print(str(key) + ' : ' + str(val))
-
+# Plot graph of frequencies
 graph = sorted(count.items(), key=operator.itemgetter(1))
 key, val = zip(*graph)
-plt.barh(key[len(key) - 20:], val[len(val) - 20:])
+plt.barh(key[len(key) - 30:], val[len(val) - 30:])
 plt.plot()
 
-with open('tweets.csv', 'w') as csvFile:
+# Create csv of all tweets
+with open('thegraduate_tweets.csv', 'w') as csvFile:
     writer = csv.writer(csvFile)
     writer.writerows(csvData)
 csvFile.close()
 
-with open('count.csv', 'w') as csvFile2:
+# Create csv of frequency counts
+with open('thegraduate_counts.csv', 'w') as csvFile2:
     writer = csv.writer(csvFile2)
     writer.writerow(['word','count'])
     for row in graph:
         writer.writerow(row)
 csvFile.close()
 
+# Ending processes
 print('Run Complete')
+plt.savefig('thegraduate.png')
 plt.show()
