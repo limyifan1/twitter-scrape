@@ -1,12 +1,12 @@
 # twitter-scrape
-####Introduction
+#### Introduction
 Python program to scrape a sample of tweets associated with Margaritaville. 
 This is part of a project in the University of Virginia McIntire School of Commerce. 
 
 Results are used to conduct brand equity analysis about common words people think of 
 when 'Margaritaville' is mentioned. 
 
-####Required Modules
+#### Required Modules
 
 1. got3: https://github.com/Jefferson-Henrique/GetOldTweets-python
 2. nltk
@@ -19,5 +19,5 @@ when 'Margaritaville' is mentioned.
 8. csv
 9. re
 
-####Note
+#### Note
 Program will create a new "tweets.csv" file within current directory
