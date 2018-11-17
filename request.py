@@ -3,75 +3,122 @@ import nltk
 from nltk.corpus import stopwords
 import string
 import time
+import random
+import matplotlib.pyplot as plt
+import operator
+import csv
+import re
 
-# api = twitter.Api(consumer_key='t5vPzosVoa1gTEYDR4CeqXW4G',
-#                   consumer_secret='u0lGoV9Q1WpPMQCNFvoxZijfdN6joXmFuBqAIXJKI2kDIrOPC8',
-#                   access_token_key='1010518682202562560-4Y8YdB2KcIUyah1KhCzgAjd91jUaIm',
-#                   access_token_secret='MIym8gUUdJuC7sdddqeeU77X3LhuHUm7RAspcymDZTx5y')
+dates = []
+# Create random list of 100 dates to search in past 5 years
+for i in range(0, 100):
+    year = random.randrange(2013, 2018)
+    month = random.randrange(1, 13)
+    day = random.randrange(1, 30)
+    if month < 10:
+        month = "0" + str(month)
+    if day < 10:
+        day = "0" + str(day)
+    dates.append(str(year) + "-" + str(month) + "-" + str(day))
 
-
-tweetCriteria = got3.manager.TweetCriteria()\
-    .setQuerySearch("Margaritaville")\
-    .setSince("2017-10-29")\
-    .setUntil("2017-10-30")\
-    # .setMaxTweets(100)
-
-start = time.time()
-tweet = got3.manager.TweetManager.getTweets(tweetCriteria)
-end = time.time()
-
-swords = stopwords.words('english')
+csvData = [["Date", "Text", "Username", "Id", "Permalink", "Retweets", "Favorites"]]
 words = []
+counter = 0
 
-for i in tweet:
-    token = nltk.word_tokenize(i.text, language='english')
-    for j in token:
+for date in dates:
+    tweetCriteria = got3.manager.TweetCriteria() \
+        .setUntil(date) \
+        .setQuerySearch("margaritaville") \
+        .setMaxTweets(10) \
+        .setTopTweets(True)
+
+    start = time.time()
+    tweet = got3.manager.TweetManager.getTweets(tweetCriteria)
+    end = time.time()
+    counter += 1
+    print(str(counter), end - start)
+
+    swords = stopwords.words('english')
+
+    tweetset = set()
+
+    for i in tweet:
+        # print(i.__dict__)
+        tweetInfo = []
+        tweetset.add(i.text)
+        tweetInfo.append(i.date)
+        tweetInfo.append(i.text)
+
+        username = re.search('https://twitter\.com/(.*)/status', i.permalink)
+        username = username.group(1)
+        tweetInfo.append(username)
+
+        tweetInfo.append(i.id)
+        tweetInfo.append(i.permalink)
+        tweetInfo.append(i.retweets)
+        tweetInfo.append(i.favorites)
+
+        csvData.append(tweetInfo)
+
+    tweet = tweetset
+
+    for i in tweet:
+        token = nltk.word_tokenize(i, language='english')
         if '@' not in token:
-            words += token
-
-for i in range(len(words)):
-    words[i] = words[i].lower()
-    words[i] = words[i].lower()
+            for j in token:
+                words.append(j.lower())
 
 cleanwords = words[:]
 
 for i in words:
     if i in swords:
         cleanwords.remove(i)
-    if i in string.punctuation:
+    elif i in string.punctuation:
         cleanwords.remove(i)
-    if 'bit.ly' in i:
+    elif 'margaritaville' in i:
         cleanwords.remove(i)
-    if '.com' in i:
+    elif 'www' in i:
         cleanwords.remove(i)
-    if '.me' in i:
+    elif '.' in i:
         cleanwords.remove(i)
-    if ('http' or 'https') in i:
+    elif 'http' in i:
         cleanwords.remove(i)
-    if 'margaritaville' in i:
+    elif i == "I":
         cleanwords.remove(i)
-    if i == "I":
+    elif i == "…":
         cleanwords.remove(i)
-    if i == "…":
+    elif i == "...":
         cleanwords.remove(i)
-    if i == "...":
+    elif i == "’" :
         cleanwords.remove(i)
-    if i == "’":
+    elif i ==  "`" :
         cleanwords.remove(i)
-    if i == "`":
+    elif "/" in i:
         cleanwords.remove(i)
-    if i == "'s":
+    elif i == "'s":
         cleanwords.remove(i)
-    if i == "—":
+    elif i == "—":
         cleanwords.remove(i)
-    if i == "''":
+    elif i == "''":
+        cleanwords.remove(i)
+    elif i == "``":
+        cleanwords.remove(i)
+    elif i == "'":
         cleanwords.remove(i)
 
 count = nltk.FreqDist(cleanwords)
 
-for key, val in count.items():
-    print(str(key) + ' : ' + str(val))
+# for key, val in count.items():
+#     print(str(key) + ' : ' + str(val))
 
-print(end-start)
+graph = sorted(count.items(), key=operator.itemgetter(1))
+key, val = zip(*graph)
+plt.barh(key[len(key) - 20:], val[len(val) - 20:])
+plt.plot()
 
-count.plot(20, title="Words associated with Margaritaville Tweets")
+with open('tweets.csv', 'w') as csvFile:
+    writer = csv.writer(csvFile)
+    writer.writerows(csvData)
+csvFile.close()
+
+plt.show()
